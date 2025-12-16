@@ -1441,7 +1441,7 @@
                 total.savings = 0; // Ensure consistency
             } else {
                 // Ahorro positivo: Usar un nombre genérico para la cabecera
-                const genericName = "Tu Mejor Elección";
+                const genericName = "POWER CUP";
                 const brandName = activeBrand.NAME.includes('DRK') ? 'DRK Energía' : 'POWER CUP Global';
                 const genericDescription = `Ofrece el mayor ahorro consolidado con ${brandName}.`;
 
@@ -1669,7 +1669,7 @@
             // Determine the label for the price section
             const priceSectionLabel = (isPowerCupMode && !hasDrkWinner) 
                 ? 'Precios de la Oferta Ganadora Consolidada (POWER CUP GLOBAL)' 
-                : 'Precios de la Oferta Consolidada (DRK Energía)';
+                : 'Precios de la Oferta Consolidada';
 
             const basePrefix = brand.NAME.includes('DRK') ? 'drk' : 'powercup';
             const color800 = brand.PRIMARY_TEXT.split('-')[1] || 'slate-800'; // Get dynamic color text-drk-800 -> drk-800
