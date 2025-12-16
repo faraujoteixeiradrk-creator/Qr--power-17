@@ -1,4 +1,4 @@
-<html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1242,10 +1242,18 @@
                 brand = BRANDS.POWER_CUP;
             } else {
                 // DRK modes (drk_only, drk_prioritized)
+                if (comparisonMode === 'drk_only') {
+                    // Force the best DRK offer, or fallback to the best overall if no DRK offers were better than actual.
+                    final = bestDrk || bestOverall;
+                } else if (comparisonMode === 'drk_prioritized') {
+                    // Prefer best DRK *if it saves money*, otherwise take the absolute best overall.
+                    final = (bestDrk && bestDrk.totalAnnual < bestDrk.originalBillAnnual) ? bestDrk : bestOverall;
+                }
+
                 if (final.isNegativeSavings) {
                     // No Savings: Use initial choice (DRK)
                     brand = BRANDS.DRK; 
-                } else if (isFinalDrk) {
+                } else if (final.offer.isDrk) {
                     // DRK won with savings in a DRK mode: Use DRK brand.
                     brand = BRANDS.DRK;
                 } else {
@@ -1428,6 +1436,7 @@
 
             // 3. Determinar la Oferta de Referencia para el resumen
             let bestOverallWinner = multiCupsData.reduce((best, current) => {
+                // If this item has more savings, it becomes the reference.
                 if (current.savings > best.savings) return { savings: current.savings, offer: current.offer, originalTariffType: current.originalTariffType };
                 return best;
             }, { 
@@ -1441,9 +1450,8 @@
                 total.savings = 0; // Ensure consistency
             } else {
                 // Ahorro positivo: Usar un nombre genérico para la cabecera
-                const genericName = "POWER CUP";
-                const brandName = activeBrand.NAME.includes('DRK') ? 'DRK Energía' : 'POWER CUP Global';
-                const genericDescription = `Ofrece el mayor ahorro consolidado con ${brandName}.`;
+                const genericName = activeBrand.NAME.includes('DRK') ? 'DRK Energía' : 'POWER CUP';
+                const genericDescription = `Ofrece el mayor ahorro consolidado con ${genericName}.`;
 
                 bestOverallWinner.offer = { 
                     name: genericName, 
@@ -1480,7 +1488,7 @@
                 if (finalResult.savings <= 0) {
                     // No savings, stick to the initial DRK brand
                     brandToApply = BRANDS.DRK;
-                } else if (finalResult.offer.isDrk) {
+                } else if (bestOverallWinner.offer.isDrk) {
                     // DRK won overall combo -> Use DRK brand
                     brandToApply = BRANDS.DRK;
                 } else {
@@ -1523,12 +1531,12 @@
 
             // MODIFICACIÓN: Mostrar Nombre y Descripción.
             // Si el nombre es genérico ("Tu Mejor Elección"), solo mostramos el nombre en H2 y la descripción en el párrafo.
-            if (res.isMulti && res.savings > 0 && offer.name === "Tu Mejor Elección") {
+            if (res.isMulti && res.savings > 0 && offer.name !== "Tu Tarifa Actual") {
                 document.getElementById('best-offer-name').textContent = offer.name;
                 document.getElementById('best-offer-desc').textContent = offer.description;
             } else {
                 // Opción 'Tu Tarifa Actual' o individual (mantiene el formato combinado)
-                document.getElementById('best-offer-name').textContent = `${offer.name || ''} - ${offer.description || ''}`;
+                document.getElementById('best-offer-name').textContent = `${offer.name || ''}`;
                 document.getElementById('best-offer-desc').textContent = offer.description;
             }
             
@@ -1651,7 +1659,7 @@
                 <div class="grid grid-cols-1 gap-4">
                     <div class="col-span-1 border-b pb-2 mb-2">
                         <div class="flex justify-between items-center ${brand.PRIMARY_TEXT}">
-                            <span class="text-sm font-black uppercase">GRAN TOTAL ENERGÍA</span>
+                            <span class="text-sm font-black uppercase">TOTAL ENERGÍA</span>
                             <span class="text-xl font-black">${num(totalEnergy, 0)} kWh</span>
                         </div>
                     </div>
@@ -1851,7 +1859,7 @@
             `;
             
             // MODIFICACIÓN: Mostrar Comercializadora - Tarifa
-            document.getElementById('best-offer-name').textContent = `${offer.name || ''} - ${offer.description || ''}`;
+            document.getElementById('best-offer-name').textContent = `${offer.name || ''}`;
             document.getElementById('best-offer-desc').textContent = offer.description;
             
             const savingsEl = document.getElementById('savings-estimate');
@@ -3110,7 +3118,7 @@
                 // Best DRK is the DRK one with the lowest annual cost
                 if (r.offer.isDrk && r.offer.name !== 'Tu Tarifa Actual') {
                     if (!bestDrk || annualCost < bestDrk.totalAnnual) {
-                            bestDrk = r;
+                             bestDrk = r;
                     }
                 }
             });
